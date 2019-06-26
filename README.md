@@ -1,6 +1,6 @@
 # rGIS V1.0
 
-R pipelines to produce GIS maps on the Fly.
+R pipelines of GIS tools and mapping..
 
 ## Authors
 
