@@ -5,6 +5,7 @@ library(spatstat)
 library(ggplot2)
 library(gridExtra)
 library(rgdal)
+library(rgeos)
 
 
 
@@ -73,21 +74,23 @@ theme_map <- function() {
 
   theme(          
     
-          panel.grid.major = element_line(color = "#A9A9A9", size = 0.1),
-          panel.grid.minor = element_line(color = "#A9A9A9", size = 0.1),
+          panel.grid.major = element_line(color = "#48474b", size = 0.05),
+          panel.grid.minor = element_line(color = "#48474b", size = 0.05),
           
           # panel.grid = element_blank(),
           # panel.border = element_blank() ,
               
           #panel.grid.minor = element_blank(),
           
-          plot.background = element_rect(fill = "#f5f5f2", color = NA), 
-          panel.background = element_rect(fill = "#bed6f7", color = "#8dafdd"), 
+          plot.background = element_rect(fill = panelColor, color = NA), 
+
+          panel.background = element_rect(fill = oceanColor, color = oceanColor), 
+          
           legend.background = element_rect(fill = "#f5f5f2", color = NA),
       
           plot.caption = element_text(hjust = 0),
           panel.spacing = unit(c(0, 0, 0, 0), "cm"),       
-          plot.margin=unit(c(1,1,1,1),"cm") ) 
+          plot.margin=unit(c(0,0,0,0),"cm") ) 
   
 }
 

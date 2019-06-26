@@ -1,6 +1,6 @@
 # rGIS V1.0
 
-R pipelines of GIS tools and mapping..
+R pipelines of GIS tools and mapping.
 
 ## Authors
 
