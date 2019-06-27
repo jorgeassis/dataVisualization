@@ -52,10 +52,10 @@ buffer <- c(1,1,1,1)
 Map1 <- ggplot() +
         geom_polygon(data = worldMap, aes(x = long, y = lat, group = group), fill="#ded9cd", colour = NA) +
         geom_path(data = worldMap, aes(x = long, y = lat, group = group), color = "#767676", size = 0.1) +
-        geom_point(data = north.group, aes(x = Lon, y = Lat), color = "#a90707") + 
-        geom_point(data = south.group, aes(x = Lon, y = Lat), color = "#a90707") + 
+        geom_point(data = north.group, aes(x = Lon, y = Lat), color = "#ed2e38") + 
+        geom_point(data = south.group, aes(x = Lon, y = Lat), color = "#1f78b4") + 
         coord_equal() +
-        theme_map() + labelsPlot
+        theme_map() # + labelsPlot
 
 Map1 # 8/8
 
