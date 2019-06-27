@@ -17,10 +17,10 @@ source("mainFunctions.R")
 
 ## -------------------
 
-name <- "Ice_2100RCP85Max"
-r.1 <- "/Users/jorgeassis/Dropbox/Manuscripts/The Modelling Factory/Climate Data/RCP85/Sea.ice.thickness.Surface.Var.Lt.Max.tif"
+name <- "Ice_PresentMin"
+r.1 <- "/Volumes/Jellyfish/Dropbox/Manuscripts/The Modelling Factory/Climate Data/Present/Sea.ice.thickness.Surface.Var.Lt.Min.tif"
 
-cExtent <- extent(c(90,175,0,75))
+cExtent <- extent(c(-180,180,0,90))
 
 ## -------------------
 
@@ -32,7 +32,7 @@ r.1[r.1 >= 0.005] <- 1
 r.1.poly <- rasterToPolygons(r.1, fun=NULL, n=8, na.rm=TRUE, digits=16, dissolve=TRUE)
 plot(r.1.poly)
 
-writeOGR(obj=r.1.poly, dsn="~/Dropbox/Data/Shapefiles/Global Ice", layer=name, driver="ESRI Shapefile" , overwrite_layer=TRUE)
+writeOGR(obj=r.1.poly, dsn="/Volumes/Jellyfish/Dropbox/Data/Shapefiles/Global Ice", layer=name, driver="ESRI Shapefile" , overwrite_layer=TRUE)
 
 ## ---------------------------------------------------------------------------
 ## ---------------------------------------------------------------------------
