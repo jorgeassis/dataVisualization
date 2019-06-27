@@ -17,10 +17,10 @@ source("mainFunctions.R")
 
 ## -------------------
 
-name <- "Ice_PresentMin"
-r.1 <- "/Volumes/Jellyfish/Dropbox/Manuscripts/The Modelling Factory/Climate Data/Present/Sea.ice.thickness.Surface.Var.Lt.Min.tif"
+name <- "Ice_LGMMin"
+r.1 <- "/Volumes/Jellyfish/Dropbox/Manuscripts/The Modelling Factory/Climate Data/LGM/Sea.ice.thickness.Surface.Var.Lt.Min.tif"
 
-cExtent <- extent(c(-180,180,0,90))
+cExtent <- extent(c(-180,180,-90,90))
 
 ## -------------------
 
