@@ -8,8 +8,6 @@
 ## --------------------------------------------------
 ## --------------------------------------------------
 
-## https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/
-
 rm(list=(ls()[ls()!="v"]))
 gc(reset=TRUE)
 

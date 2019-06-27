@@ -2,6 +2,10 @@
 
 R pipelines of GIS tools and mapping.
 
+## Sources and Ideas
+
+https://timogrossenbacher.ch/2016/12/beautiful-thematic-maps-with-ggplot2-only/
+
 ## Authors
 
 **Jorge Assis** @ [Bears Studio](https://www.bears.studio)
