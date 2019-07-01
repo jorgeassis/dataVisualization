@@ -17,7 +17,7 @@ source("mainFunctions.R")
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-cExtent <- extent(c(-50,-20,-34,0))
+cExtent <- extent(c(10,30,-38,-15))
 cExtent <- getMapExtent()
 
 cColors <- c("#8EB0D6", "#F8F4C1","#E29939","#AA1313")
@@ -28,8 +28,9 @@ oceanColor <- "#ffffff"
 ## ----------------------------------------------------------------------------------------------------
 ## Point data Map
 
-pointData <- "/Volumes/Jellyfish/Dropbox/Manuscripts/_ Under Revision/Modelling the distribution of Laminaria abyssalis/Data/lp.csv"
-pointData <- read.table(pointData,sep=";",header=T)[,c("Lon","Lat")]
+pointData <- "/Volumes/Jellyfish/Dropbox/Manuscripts/The Modelling Factory/Kelp/1. Laminaria pallida (Surface)/Data/Occurrences/Laminaria pallida Processed.csv"
+pointData <- read.csv(pointData,sep=";",header=T)[,c("Lon","Lat")]
+pointData <- pointData[pointData$Lon >= 14,]
 
 titleMap <-  "" 
 subtitleMap <-  ""
@@ -43,6 +44,7 @@ addLabelsPlot()
 
 worldMap <- ne_countries(scale = 10, returnclass = "sp")
 worldMap <- crop(worldMap,cExtent)
+worldMap <- aggregate(worldMap,dissolve=T)
 
 buffer <- c(1,1,1,1)
 
@@ -51,9 +53,11 @@ Map1 <- ggplot() +
         geom_path(data = worldMap, aes(x = long, y = lat, group = group), color = "#767676", size = 0.1) +
         geom_point(data = pointData, aes(x = Lon, y = Lat), color = "#565656") + 
         coord_equal() +
-        theme_map() # + labelsPlot
+        theme_map() + labelsPlot
 
 Map1 # 8/8
+
+grid.arrange(Map1, Map2, ncol=2) # 2: 10/8
 
 ## ---------------------------------------------------------------------------
 ## ---------------------------------------------------------------------------
