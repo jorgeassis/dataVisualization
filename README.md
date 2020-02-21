@@ -1,4 +1,4 @@
-# rGIS V1.0
+# rGIS V1.0 GEt CODe FROM COURSE!
 
 R pipelines of GIS tools and mapping.
 
