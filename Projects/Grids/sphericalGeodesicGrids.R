@@ -1,6 +1,8 @@
 
 
 # Spherical Geodesic Grids
+# https://github.com/r-barnes/dggridR
+
 
 library(dggridR)
 library(dplyr)
@@ -60,5 +62,48 @@ ggplot() +
   theme(axis.text.x=element_blank()) +
   theme(axis.text.y=element_blank(), panel.border = element_blank())
 
-
 writeOGR(dggsOcean, ".", "geodesicGridOceanL1", driver="ESRI Shapefile") #also you were missing the driver argument
+
+# Correct for date-line crossings
+
+listToRemove <- numeric()
+listToAdd <- list()
+
+for(i in 1:length(dggsOcean)) {
+  
+ if( extent(dggsOcean[i,])[1] < 0 & extent(dggsOcean[i,])[2] > 0 & max(extent(dggsOcean[i,])[1:2])-min(extent(dggsOcean[i,])[1:2]) > 180 ) { 
+   
+   listToRemove <- c(listToRemove,i)
+   
+   coords1 <- fortify(dggsOcean[i,])[,1:2]
+   coords2 <- fortify(dggsOcean[i,])[,1:2]
+   coords1[coords1[,1] < 0 ,1] <- 180
+   coords2[coords2[,1] > 0 ,1] <- -180
+   coords2 <- rbind(coords2,data.frame(long=-180,lat=max(coords2[,2])))
+   coords2 <- rbind(coords2,data.frame(long=-180,lat=min(coords2[,2])))
+   coords2 <- coords2[chull(coords2),] 
+
+   coords1 <- spPolygons(as.matrix(coords1))
+   coords2 <- spPolygons(as.matrix(coords2))
+   
+   # plot(dggsOcean[i,])
+   # plot(coords1,add=TRUE,col="red")
+   # plot(coords2,add=TRUE,col="green")
+
+   if( length(listToAdd) >  0 ) { listToAdd <- union(listToAdd, unionSpatialPolygons(union(coords1, coords2), c(1,1))    )  }
+   if( length(listToAdd) == 0 ) { listToAdd <- unionSpatialPolygons(union(coords1, coords2), c(1,1))  }
+   
+ }
+  
+  if( (extent(dggsOcean[i,])[1] > 0 & extent(dggsOcean[i,])[2] < 0) ) { stop(i) }
+
+}
+
+plot(dggsOcean[-listToRemove,])
+
+dggsOcean <- dggsOcean[-listToRemove,]
+dggsOcean <- union(dggsOcean,listToAdd)
+dggsOcean$id <- 1:length(dggsOcean)
+
+writeOGR(dggsOcean, ".", "geodesicGridOceanL1Corrected", driver="ESRI Shapefile") #also you were missing the driver argument
+
