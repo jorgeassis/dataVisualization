@@ -59,8 +59,9 @@ mainGlobalMap
 
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
-file <- 1
+file <- 28
 rasterMap <- raster(rasters[file])
+names(rasterMap)
 # rasterMap[rasterMap == 0.2] <- NA
 
 ## --------------
@@ -77,7 +78,7 @@ rasterMapDF.polygons$Value <- rasterMapDF$val
 ## ----------------------------------------------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------
 
-fieldLabel <- "Species richness\n[number]"
+fieldLabel <- "Species gain\n[number]"
 
 ## -----------------
 # plasma inferno magma viridis
@@ -94,7 +95,7 @@ plot2 <- mainGlobalMap +
 # + theme(legend.position = "none")
 
 pdf(file=paste0(mainDirectory,"/"),width=12,height=12,useDingbats=FALSE)
-plot2
+plot1
 dev.off()
 
 # ----------------------
@@ -108,7 +109,7 @@ plotCombined <- grid.arrange(plot1.i, plot2.i, nrow = 1)
 plotCombined <- cowplot::ggdraw(plotCombined) + theme(plot.background = element_rect(fill="#F3F3F3", color = NA))
 plotCombined
 
-pdf(file=paste0(mainDirectory,"/Fig1.pdf"),width=12,useDingbats=FALSE)
+pdf(file=paste0(mainDirectory,"/Fig5.pdf"),width=12,useDingbats=FALSE)
 plotCombined
 dev.off()
 

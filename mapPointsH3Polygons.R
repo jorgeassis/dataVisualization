@@ -95,9 +95,11 @@ plot2.i <- plot2 + theme(plot.margin = unit(c(0,0,0.2,0), "cm"))
 
 # ----------------------
 
-grid.arrange(plot1.i,plot2.i, ncol = 2, nrow = 1)
+plotCombined <- grid.arrange(plot1.i, plot2.i, nrow = 1)
+plotCombined <- cowplot::ggdraw(plotCombined) + theme(plot.background = element_rect(fill="#F3F3F3", color = NA))
+plotCombined
 
-pdf(file="Sup.Solea solea.pdf",width=12,height=12,useDingbats=FALSE)
-grid.arrange(plot1.i,plot2.i,plot3.i,plot4.i, ncol = 2, nrow = 2)
+pdf(file=paste0(mainDirectory,"/Fig1.pdf"),width=12,useDingbats=FALSE)
+plotCombined
 dev.off()
 
