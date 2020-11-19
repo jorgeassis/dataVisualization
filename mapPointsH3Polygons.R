@@ -1,12 +1,3 @@
-## --------------------------------------------------
-## --------------------------------------------------
-##
-## Pretty maps [R]
-## Muffins 'n' Code
-## https://github.com/jorgeassis
-##
-## --------------------------------------------------
-## --------------------------------------------------
 
 rm(list=(ls()[ls()!="v"]))
 gc(reset=TRUE)
@@ -57,45 +48,45 @@ mainGlobalMap <- ggplot() +
   theme_map + coord_sf(crs = worldMapCoordRef)
 mainGlobalMap
 
-rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
-rasters
-file <- 1
-rasterMap <- raster(rasters[file])
-# rasterMap[rasterMap == 0.2] <- NA
-
 ## --------------
 
-# https://github.com/uber/h3/blob/master/docs/core-library/restable.md
-resolutionH3 <- 4
+dataFolder <- "/Volumes/Jellyfish/OneDrive - Universidade do Algarve/Manuscripts/Modelling the global distribution of marine forests/Data/"
+load(paste0(dataFolder,"/datasetMF.RData"))
+dataset <- data.frame(dataset,stringsAsFactors = FALSE)
+dataset$decimalLongitude <- as.numeric(as.character(dataset$decimalLongitude ))
+dataset$decimalLatitude <- as.numeric(as.character(dataset$decimalLatitude ))
 
-rasterMapDF <- data.frame(xyFromCell(rasterMap, Which( !is.na(rasterMap) , cells=T)),val=rasterMap[Which( !is.na(rasterMap) , cells=T)])
-rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { getIndexFromCoords(x[[2]], x[[1]], resolution = resolutionH3) } ))
-rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { mean(rasterMapDF[rasterMapDF$hex == x , "val"]) } ))
-rasterMapDF.polygons <- h3_to_geo_boundary_sf(rasterMapDF$hex)
-rasterMapDF.polygons$Value <- rasterMapDF$val
+occurrenceRecords <- dataset[dataset$decimalLongitude >= mapExtent[1] & dataset$decimalLongitude <= mapExtent[3] & dataset$decimalLatitude >= mapExtent[2] & dataset$decimalLatitude <= mapExtent[4] ,c("decimalLongitude","decimalLatitude")]
+colnames(occurrenceRecords) <- c("Lon","Lat")
 
 ## ----------------------------------------------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------
+
+captionMap <- "a) Occurrence records" 
+
+## -----------------
+
+occurrenceRecords <- st_as_sf(x = occurrenceRecords,coords = c("Lon", "Lat"), crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+occurrenceRecords <- st_transform(occurrenceRecords, crs = worldMapCoordRef)
+
+## -----------------
+
+occurrenceRecords$ID <- 1:nrow(occurrenceRecords)
+mask <- drawPolygon2(occurrenceRecords)
+maskST <- st_as_sf(mask)
+st_crs(maskST) <-worldMapCoordRef
+maskST$ID <- 1
+occurrenceRecordsIn <- st_join(occurrenceRecords, maskST, join = st_intersects)
+occurrenceRecordsIn <- occurrenceRecords[which(!is.na(occurrenceRecordsIn$ID.y)),]
+
+## -----------------
 
 fieldLabel <- "Species richness\n[number]"
 
-## -----------------
-# plasma inferno magma viridis
-
-plot2 <- mainGlobalMap +
-         geom_sf(data = rasterMapDF.polygons, aes(fill = Value) , size=0.1) +
-         scale_fill_viridis_c(option = 'magma', direction = -1, begin = 0, end = 1) +
-         coord_sf(crs = worldMapCoordRef) + labs(fill = fieldLabel) +
-         theme(legend.position=c(.95, .95),
-               legend.justification=c("right", "top"),
-               legend.margin=margin(0,0,0,0),
-               legend.box.margin=margin(0,0,0,-80))
-
-# + theme(legend.position = "none")
-
-pdf(file=paste0(mainDirectory,"/"),width=12,height=12,useDingbats=FALSE)
-plot2
-dev.off()
+plot1 <- mainGlobalMap +
+  geom_sf(data = occurrenceRecordsIn, size = 1, shape = 21, fill = "#911616" , color="#911616" , stroke = 0.15, alpha = 0.85) +
+  coord_sf(crs = worldMapCoordRef)
+plot1
 
 # ----------------------
 
@@ -104,11 +95,9 @@ plot2.i <- plot2 + theme(plot.margin = unit(c(0,0,0.2,0), "cm"))
 
 # ----------------------
 
-plotCombined <- grid.arrange(plot1.i, plot2.i, nrow = 1)
-plotCombined <- cowplot::ggdraw(plotCombined) + theme(plot.background = element_rect(fill="#F3F3F3", color = NA))
-plotCombined
+grid.arrange(plot1.i,plot2.i, ncol = 2, nrow = 1)
 
-pdf(file=paste0(mainDirectory,"/Fig1.pdf"),width=12,useDingbats=FALSE)
-plotCombined
+pdf(file="Sup.Solea solea.pdf",width=12,height=12,useDingbats=FALSE)
+grid.arrange(plot1.i,plot2.i,plot3.i,plot4.i, ncol = 2, nrow = 2)
 dev.off()
 
