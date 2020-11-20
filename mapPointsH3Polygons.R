@@ -31,7 +31,7 @@ theme_map <-
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-mainDirectory <- "/Volumes/Jellyfish/OneDrive - Universidade do Algarve/Manuscripts/Modelling the global distribution of marine forests/Results/_ Ensembles/"
+mainDirectory <- "../Results/_ Backup/_ Ensembles/"
 worldMap <- ne_countries(scale = 10, returnclass = "sf")
 
 ## ------------
@@ -50,14 +50,21 @@ mainGlobalMap
 
 ## --------------
 
-dataFolder <- "/Volumes/Jellyfish/OneDrive - Universidade do Algarve/Manuscripts/Modelling the global distribution of marine forests/Data/"
+dataFolder <- "../Data/"
 load(paste0(dataFolder,"/datasetMF.RData"))
 dataset <- data.frame(dataset,stringsAsFactors = FALSE)
 dataset$decimalLongitude <- as.numeric(as.character(dataset$decimalLongitude ))
 dataset$decimalLatitude <- as.numeric(as.character(dataset$decimalLatitude ))
 
+groupVal <- c("Alariaceae","Laminariaceae","Tilopteridaceae") # "Ochrophyta"
+groupName <- "family" # phylum
+
+subseter <- which( dataset[,groupName] %in% groupVal )
+dataset <- dataset[subseter,]
+
 occurrenceRecords <- dataset[dataset$decimalLongitude >= mapExtent[1] & dataset$decimalLongitude <= mapExtent[3] & dataset$decimalLatitude >= mapExtent[2] & dataset$decimalLatitude <= mapExtent[4] ,c("decimalLongitude","decimalLatitude")]
 colnames(occurrenceRecords) <- c("Lon","Lat")
+nrow(occurrenceRecords)
 
 ## ----------------------------------------------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------
@@ -66,18 +73,22 @@ captionMap <- "a) Occurrence records"
 
 ## -----------------
 
-occurrenceRecords <- st_as_sf(x = occurrenceRecords,coords = c("Lon", "Lat"), crs="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-occurrenceRecords <- st_transform(occurrenceRecords, crs = worldMapCoordRef)
+occurrenceRecordsSf <- occurrenceRecords
+coordinates(occurrenceRecordsSf) <- ~Lon+Lat
+crs(occurrenceRecordsSf) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+occurrenceRecordsSf <- st_as_sf(x = occurrenceRecordsSf,coords = c("Lon", "Lat"))
+occurrenceRecordsSf <- st_transform(occurrenceRecordsSf, crs = worldMapCoordRef)
 
 ## -----------------
 
-occurrenceRecords$ID <- 1:nrow(occurrenceRecords)
+occurrenceRecordsSf$ID <- 1:nrow(occurrenceRecordsSf)
 mask <- drawPolygon2(occurrenceRecords)
 maskST <- st_as_sf(mask)
-st_crs(maskST) <-worldMapCoordRef
+maskST <- st_transform(maskST, crs = worldMapCoordRef)
+st_crs(maskST) <- worldMapCoordRef
 maskST$ID <- 1
-occurrenceRecordsIn <- st_join(occurrenceRecords, maskST, join = st_intersects)
-occurrenceRecordsIn <- occurrenceRecords[which(!is.na(occurrenceRecordsIn$ID.y)),]
+occurrenceRecordsIn <- st_join(occurrenceRecordsSf, maskST, join = st_intersects)
+occurrenceRecordsIn <- occurrenceRecordsSf[which(!is.na(occurrenceRecordsIn$ID.y)),]
 
 ## -----------------
 

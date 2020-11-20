@@ -40,7 +40,7 @@ theme_map <-
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-mainDirectory <- "/Volumes/Jellyfish/OneDrive - Universidade do Algarve/Manuscripts/Modelling the global distribution of marine forests/Results/_ Ensembles/"
+mainDirectory <- "../Results/_ Backup/_ Ensembles/"
 worldMap <- ne_countries(scale = 10, returnclass = "sf")
 
 ## ------------
@@ -59,7 +59,7 @@ mainGlobalMap
 
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
-file <- 28
+file <- 31 # 31
 rasterMap <- raster(rasters[file])
 names(rasterMap)
 # rasterMap[rasterMap == 0.2] <- NA
@@ -78,6 +78,7 @@ rasterMapDF.polygons$Value <- rasterMapDF$val
 ## ----------------------------------------------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------
 
+fieldLabel <- "Species richness\n[number]"
 fieldLabel <- "Species gain\n[number]"
 
 ## -----------------
@@ -92,6 +93,7 @@ plot2 <- mainGlobalMap +
                legend.margin=margin(0,0,0,0),
                legend.box.margin=margin(0,0,0,-80))
 
+plot2
 # + theme(legend.position = "none")
 
 pdf(file=paste0(mainDirectory,"/"),width=12,height=12,useDingbats=FALSE)
@@ -109,7 +111,7 @@ plotCombined <- grid.arrange(plot1.i, plot2.i, nrow = 1)
 plotCombined <- cowplot::ggdraw(plotCombined) + theme(plot.background = element_rect(fill="#F3F3F3", color = NA))
 plotCombined
 
-pdf(file=paste0(mainDirectory,"/Fig5.pdf"),width=12,useDingbats=FALSE)
+pdf(file=paste0("../Results/_ Ensembles/","/KelpsFig5.pdf"),width=12,useDingbats=FALSE)
 plotCombined
 dev.off()
 
