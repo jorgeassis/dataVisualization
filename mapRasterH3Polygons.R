@@ -40,7 +40,21 @@ theme_map <-
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-mainDirectory <- "../Results/_ Backup/_ Ensembles/"
+mainDirectory <- "../Results/_ Ensembles/"
+
+## ------------------------
+# Global projection
+
+mapExtent = c(xmin = -180, ymin = -90, xmax = 180, ymax = 90)
+
+worldMap <- ne_countries(scale = 10, returnclass = "sf")
+worldMapCoordRef <- crs(worldMap)
+
+mainGlobalMap <- ggplot() + 
+  geom_sf(data = worldMap,fill="#ABABAB", colour = "#9B9B9B" , size=0.1 ) +
+  theme(axis.ticks=element_blank()) + ylab("") + xlab("") +
+  theme_map + coord_sf(crs = worldMapCoordRef)
+mainGlobalMap
 
 ## ------------------------
 # Europe projection
@@ -65,7 +79,8 @@ mainGlobalMap
 worldMap <- ne_countries(scale = 10, returnclass = "sp")
 mapExtent = c(xmin = -180, ymin = 45, xmax = 180, ymax = 90)
 worldMap <- crop(worldMap,extent(mapExtent["xmin"],mapExtent["xmax"],mapExtent["ymin"],mapExtent["ymax"]))
-
+worldMapCoordRef <- crs(worldMap)
+  
 x_lines <- seq(-120,180, by = 60)
 
 mainGlobalMap <- ggplot() + 
@@ -86,15 +101,19 @@ mainGlobalMap
 
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
-file <- 1 # 31
+file <- 83 # Present 72; RCP 73 75
 rasterMap <- raster(rasters[file])
 names(rasterMap)
+
 # rasterMap[rasterMap == 0.2] <- NA
+# rasterMap[rasterMap == 0] <- NA
 
 ## --------------
 
 # https://github.com/uber/h3/blob/master/docs/core-library/restable.md
 resolutionH3 <- 4
+
+#rasterMap <- crop(rasterMap,extent(c(-175,175,-90,90)))
 
 rasterMapDF <- data.frame(xyFromCell(rasterMap, Which( !is.na(rasterMap) , cells=T)),val=rasterMap[Which( !is.na(rasterMap) , cells=T)])
 rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { getIndexFromCoords(x[[2]], x[[1]], resolution = resolutionH3) } ))
@@ -103,27 +122,8 @@ rasterMapDF.polygons <- h3_to_geo_boundary_sf(rasterMapDF$hex)
 rasterMapDF.polygons$hex <- rasterMapDF$hex
 rasterMapDF.polygons$value <- rasterMapDF$val
 
-max(rasterMapDF$val)
-
 ## ----------------------------------------------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------
-
-fieldLabel <- "Species richness\n[number]"
-fieldLabel <- "Species gain\n[number]"
-
-## -----------------
-## As Sf
-
-plot1 <- mainGlobalMap +
-         geom_sf(data = rasterMapDF.polygons, aes(fill = value) , size=0.1) +
-         scale_fill_viridis_c(option = 'magma', direction = -1, begin = 0, end = 1) +
-         coord_sf(crs = worldMapCoordRef) + labs(fill = fieldLabel) +
-         theme(legend.position=c(.95, .95),
-               legend.justification=c("right", "top"),
-               legend.margin=margin(0,0,0,0),
-               legend.box.margin=margin(0,0,0,-80))
-
-plot1
 
 ## -----------------
 # As Sp 
@@ -136,37 +136,64 @@ rasterMapDF.polygons <- fortify(rasterMapDF.polygons)
 rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$lat >= extent(worldMap)[3],]
 rasterMapDF.polygons$value <- sapply(as.numeric(rasterMapDF.polygons$id), function(x) { rasterMapDF[x,"val"] })
 
-plot1 <- mainGlobalMap +
+rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$value >= 2,]
+
+minLegend <- round(min(rasterMapDF.polygons$value))
+maxLegend <- round(max(rasterMapDF.polygons$value))
+
+minLegend
+maxLegend
+maxLegend <- # Kelp Regular maps 56
+
+plot3 <- mainGlobalMap +
   geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour = NA, size = 0.1) +
-  scale_fill_viridis_c(name= fieldLabel, option = 'magma', direction = -1, begin = 0, end = 1, limits=c(0,100)) +
+  scale_fill_viridis_c(name= fieldLabel, option = 'magma', direction = -1, begin = 0, end = 1, limits=c(minLegend,maxLegend)) +
   theme(legend.position=c(.99, .99),
         legend.justification=c("right", "top"),
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(0,0,0,-80),legend.title=element_blank(),legend.background = element_rect(fill = "#ffffff", color = NA))
 
-plot1
+plotLegend <- plot1
+plot3 <- plot3 + theme(legend.position = "none")
+plot3
 
-# + theme(legend.position = "none")
+## --------------------------------------------
+## --------------------------------------------
+## As Sf
 
-## -----------------
-## -----------------
+fieldLabel <- "Species richness\n[number]"
+fieldLabel <- "Species gain\n[number]"
 
-pdf(file=paste0(mainDirectory,"/"),width=12,height=12,useDingbats=FALSE)
-plot1
+plot2 <- mainGlobalMap +
+  geom_sf(data = rasterMapDF.polygons, aes(fill = value) , size=0.1) +
+  scale_fill_viridis_c(option = 'magma', direction = -1, begin = 0, end = 1) +
+  coord_sf(crs = worldMapCoordRef) + labs(fill = fieldLabel) +
+  theme(legend.position="bottom",
+        legend.justification=c("top"),
+        legend.margin=margin(0,0,0,0),
+        legend.box.margin=margin(0,0,0,-80))
+
+pdf(file=paste0("../Results/_ Figures/","/KelpsGlobalFig2.pdf"),width=12,useDingbats=FALSE)
+plot2
 dev.off()
 
-# ----------------------
+## --------------------------------------------
+## --------------------------------------------
 
 plot1.i <- plot1 + theme(plot.margin = unit(c(0,0,0.2,0), "cm"))
 plot2.i <- plot2 + theme(plot.margin = unit(c(0,0,0.2,0), "cm"))
+plot3.i <- plot3 + theme(plot.margin = unit(c(0,0,0.2,0), "cm"))
 
 # ----------------------
 
-plotCombined <- grid.arrange(plot1.i, plot2.i, nrow = 1)
-plotCombined <- cowplot::ggdraw(plotCombined) + theme(plot.background = element_rect(fill="#F3F3F3", color = NA))
+plotCombined <- grid.arrange(plot1.i, plot2.i, plot3.i, nrow = 1)
+plotCombined <- cowplot::ggdraw(plotCombined) + theme(plot.background = element_rect(fill="#ffffff", color = NA))
 plotCombined
 
-pdf(file=paste0("../Results/_ Ensembles/","/KelpsFig5.pdf"),width=12,useDingbats=FALSE)
+pdf(file=paste0("../../Estimating future distributional shifts of Arctic marine macroalgae/Figures/KelpsFig1.pdf"),width=12,useDingbats=FALSE)
 plotCombined
 dev.off()
 
+pdf(file=paste0("../../Estimating future distributional shifts of Arctic marine macroalgae/Figures/KelpsLegend.pdf"),width=12,useDingbats=FALSE)
+plotLegend
+dev.off()

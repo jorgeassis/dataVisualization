@@ -31,8 +31,19 @@ theme_map <-
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-mainDirectory <- "../Results/_ Backup/_ Ensembles/"
+## ------------------------
+# Global projection
+
+mapExtent = c(xmin = -180, ymin = -90, xmax = 180, ymax = 90)
+
 worldMap <- ne_countries(scale = 10, returnclass = "sf")
+worldMapCoordRef <- crs(worldMap)
+
+mainGlobalMap <- ggplot() + 
+  geom_sf(data = worldMap,fill="#ABABAB", colour = "#9B9B9B" , size=0.1 ) +
+  theme(axis.ticks=element_blank()) + ylab("") + xlab("") +
+  theme_map + coord_sf(crs = worldMapCoordRef)
+mainGlobalMap
 
 ## ------------------------
 # Europe projection
@@ -87,10 +98,10 @@ dataset$decimalLatitude <- as.numeric(as.character(dataset$decimalLatitude ))
 ## ------------------------
 ## Subset by taxa
 
-unique(dataset$order)
+unique(dataset$family)
 
-groupVal <- c("Laminariales","Fucales","Tilopteridales") # "Ochrophyta"
-groupName <- "order" # phylum
+groupVal <- c("Alariaceae","Laminariaceae","Tilopteridaceae")
+groupName <- "family" # family
 subseter <- which( dataset[,groupName] %in% groupVal )
 dataset <- dataset[subseter,]
 
@@ -130,6 +141,8 @@ crs(occurrenceRecords) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +tow
 occurrenceRecordsSf <- st_as_sf(x = occurrenceRecords,coords = c("Lon", "Lat"))
 occurrenceRecordsSf <- st_transform(occurrenceRecordsSf, crs = worldMapCoordRef)
 occurrenceRecordsSf$ID <- 1:nrow(occurrenceRecordsSf)
+occurrenceRecordsIn <- occurrenceRecordsSf
+
 mask <- drawPolygon2(occurrenceRecords)
 maskST <- st_as_sf(mask)
 maskST <- st_transform(maskST, crs = worldMapCoordRef)
@@ -155,7 +168,9 @@ plot1 <- mainGlobalMap +
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(0,0,0,-80),legend.title=element_blank(),legend.background = element_rect(fill = "#ffffff", color = NA))
 
+pdf(file=paste0("../Results/_ Figures/","/KelpsGlobalFig1.pdf"),width=12,useDingbats=FALSE)
 plot1
+dev.off()
 
 # ----------------------
 
