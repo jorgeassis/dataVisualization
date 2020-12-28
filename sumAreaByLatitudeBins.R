@@ -31,25 +31,35 @@ library(ggridges)
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
 
-file <- 72 # 30 32,34,36 9
+# Kelp
+
+file <- 95 # Present 95 113
 rasterMap1 <- raster(rasters[file])
 rasterMap1[rasterMap1 == 1] <- NA
 names(rasterMap1)
 
-file <- 73 #  32,34,36 9
+# Seagrass
+
+file <- 113 #  32,34,36 9
 rasterMap2 <- raster(rasters[file])
 rasterMap2[rasterMap2 == 1] <- NA
 names(rasterMap2)
 
-file <- 74 #  32,34,36 9
+# Fucoid
+
+file <- 113 #  32,34,36 9
 rasterMap3 <- raster(rasters[file])
 rasterMap3[rasterMap3 == 1] <- NA
 names(rasterMap3)
+
+# Fucoid Intertidal
 
 file <- 75 # 30 ,34,36 9
 rasterMap4 <- raster(rasters[file])
 rasterMap4[rasterMap4 == 1] <- NA
 names(rasterMap4)
+
+# Fucoid Subtidal
 
 file <- 76 # 30 ,34,36 9
 rasterMap5 <- raster(rasters[file])
@@ -60,9 +70,13 @@ area <- raster::area(rasterMap1)
 
 # --------------
 
-bins <- seq(50,90,by=0.5)
-resultBinDiversity <- data.frame(bins,Present=NA,RCP26=NA,RCP45=NA,RCP60=NA,RCP85=NA)
-resultBinArea <- data.frame(bins,Present=NA,RCP26=NA,RCP45=NA,RCP60=NA,RCP85=NA)
+bins <- seq(-90,90,by=1)
+
+resultBinDiversity <- data.frame(bins,Kelp=NA,Seagrass=NA,Fucoid=NA,FucoidIntertidal=NA,FucoidSubtidal=NA)
+resultBinArea <- data.frame(bins,Kelp=NA,Seagrass=NA,Fucoid=NA,FucoidIntertidal=NA,FucoidSubtidal=NA)
+
+# resultBinDiversity <- data.frame(bins,Present=NA,RCP26=NA,RCP45=NA,RCP60=NA,RCP85=NA)
+# resultBinArea <- data.frame(bins,Present=NA,RCP26=NA,RCP45=NA,RCP60=NA,RCP85=NA)
 
 for(bin in bins) {
   
@@ -117,50 +131,3 @@ plotCombined
 pdf(file=paste0("../../Estimating future distributional shifts of Arctic marine macroalgae/Figures/KelpsFig2.pdf"),width=20,height=8,useDingbats=FALSE)
 plotCombined
 dev.off()
-
-# ----------------------------
-
-caffBoundary <- "../../../Data/Shapefiles/CAFF Boundary/CAFF_Boundary_Polygon_4326.shp"
-caffBoundary <- shapefile(caffBoundary)
-
-finalEnsembleBaseline <- rasterMap1
-finalEnsembleBaseline[finalEnsembleBaseline >= 1] <- 1
-
-finalEnsembleRCP26 <- rasterMap2
-finalEnsembleRCP26[finalEnsembleRCP26 >= 1] <- 1
-
-finalEnsembleRCP45 <- rasterMap3
-finalEnsembleRCP45[finalEnsembleRCP45 >= 1] <- 1
-
-finalEnsembleRCP60 <- rasterMap4
-finalEnsembleRCP60[finalEnsembleRCP60 >= 1] <- 1
-
-finalEnsembleRCP85 <- rasterMap5
-finalEnsembleRCP85[finalEnsembleRCP85 >= 1] <- 1
-
-sum(getValues(mask(raster::area(finalEnsembleBaseline),caffBoundary) * mask(finalEnsembleBaseline,caffBoundary)),na.rm=TRUE) # km2
-
-sum(getValues(mask(raster::area(finalEnsembleRCP26),caffBoundary) * mask(finalEnsembleRCP26,caffBoundary)),na.rm=TRUE) # km2
-sum(getValues(mask(raster::area(finalEnsembleRCP45),caffBoundary) * mask(finalEnsembleRCP45,caffBoundary)),na.rm=TRUE) # km2
-sum(getValues(mask(raster::area(finalEnsembleRCP60),caffBoundary) * mask(finalEnsembleRCP60,caffBoundary)),na.rm=TRUE) # km2
-sum(getValues(mask(raster::area(finalEnsembleRCP85),caffBoundary) * mask(finalEnsembleRCP85,caffBoundary)),na.rm=TRUE) # km2
-
-# ------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------
-# Polar migration km decade-1
-
-finalEnsembleBaselineDF <- as.data.frame(finalEnsembleBaseline,xy=TRUE)
-finalEnsembleBaselineDF <- finalEnsembleBaselineDF[!is.na(finalEnsembleBaselineDF[,3]),]
-max(finalEnsembleBaselineDF$y)
-
-finalEnsembleRCP26DF <- as.data.frame(finalEnsembleRCP26,xy=TRUE)
-finalEnsembleRCP26DF <- finalEnsembleRCP26DF[!is.na(finalEnsembleRCP26DF[,3]),]
-max(finalEnsembleRCP26DF$y)
-
-finalEnsembleRCP60DF <- as.data.frame(finalEnsembleRCP60,xy=TRUE)
-finalEnsembleRCP60DF <- finalEnsembleRCP60DF[!is.na(finalEnsembleRCP60DF[,3]),]
-max(finalEnsembleRCP60DF$y)
-
-(((83.79167 - 81.125) / 8)) * 111
-(((83.70833 - 81.125) / 8)) * 111
-

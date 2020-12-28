@@ -101,7 +101,7 @@ mainGlobalMap
 
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
-file <- 83 # Present 72; RCP 73 75
+file <- 113 # Present 95 113
 rasterMap <- raster(rasters[file])
 names(rasterMap)
 
@@ -111,9 +111,8 @@ names(rasterMap)
 ## --------------
 
 # https://github.com/uber/h3/blob/master/docs/core-library/restable.md
-resolutionH3 <- 4
-
-#rasterMap <- crop(rasterMap,extent(c(-175,175,-90,90)))
+resolutionH3 <- 3
+rasterMap <- crop(rasterMap,extent(c(-177,177,-90,90)))
 
 rasterMapDF <- data.frame(xyFromCell(rasterMap, Which( !is.na(rasterMap) , cells=T)),val=rasterMap[Which( !is.na(rasterMap) , cells=T)])
 rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { getIndexFromCoords(x[[2]], x[[1]], resolution = resolutionH3) } ))
@@ -136,16 +135,18 @@ rasterMapDF.polygons <- fortify(rasterMapDF.polygons)
 rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$lat >= extent(worldMap)[3],]
 rasterMapDF.polygons$value <- sapply(as.numeric(rasterMapDF.polygons$id), function(x) { rasterMapDF[x,"val"] })
 
-rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$value >= 2,]
+# rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$value >= 2,]
 
 minLegend <- round(min(rasterMapDF.polygons$value))
 maxLegend <- round(max(rasterMapDF.polygons$value))
 
 minLegend
 maxLegend
-maxLegend <- # Kelp Regular maps 56
+# maxLegend <- # Kelp Regular maps 56
 
-plot3 <- mainGlobalMap +
+fieldLabel <- "Species richness\n[number]"
+
+plot1 <- mainGlobalMap +
   geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour = NA, size = 0.1) +
   scale_fill_viridis_c(name= fieldLabel, option = 'magma', direction = -1, begin = 0, end = 1, limits=c(minLegend,maxLegend)) +
   theme(legend.position=c(.99, .99),
@@ -153,9 +154,16 @@ plot3 <- mainGlobalMap +
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(0,0,0,-80),legend.title=element_blank(),legend.background = element_rect(fill = "#ffffff", color = NA))
 
+plot1
 plotLegend <- plot1
+
 plot3 <- plot3 + theme(legend.position = "none")
 plot3
+
+pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/SeagrassGlobalFig1.pdf"),width=12,useDingbats=FALSE)
+plot1
+dev.off()
+write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/SeagrassGlobalFig1.csv"))
 
 ## --------------------------------------------
 ## --------------------------------------------
