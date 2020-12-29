@@ -33,23 +33,20 @@ rasters
 
 # Kelp
 
-file <- 95 # Present 95 113
+file <- 96 # Present 95 113
 rasterMap1 <- raster(rasters[file])
-rasterMap1[rasterMap1 == 1] <- NA
 names(rasterMap1)
 
 # Seagrass
 
-file <- 113 #  32,34,36 9
+file <- 114 #  32,34,36 9
 rasterMap2 <- raster(rasters[file])
-rasterMap2[rasterMap2 == 1] <- NA
 names(rasterMap2)
 
 # Fucoid
 
-file <- 113 #  32,34,36 9
+file <- 90 #  32,34,36 9
 rasterMap3 <- raster(rasters[file])
-rasterMap3[rasterMap3 == 1] <- NA
 names(rasterMap3)
 
 # Fucoid Intertidal
@@ -86,22 +83,24 @@ for(bin in bins) {
   resultBinDiversity[resultBinDiversity$bins == bin,2] <- mean(rasterMap1[cells]  , na.rm=T)
   resultBinDiversity[resultBinDiversity$bins == bin,3] <- mean(rasterMap2[cells]  , na.rm=T)
   resultBinDiversity[resultBinDiversity$bins == bin,4] <- mean(rasterMap3[cells]  , na.rm=T)
-  resultBinDiversity[resultBinDiversity$bins == bin,5] <- mean(rasterMap4[cells]  , na.rm=T)
-  resultBinDiversity[resultBinDiversity$bins == bin,6] <- mean(rasterMap5[cells]  , na.rm=T)
+  #resultBinDiversity[resultBinDiversity$bins == bin,5] <- mean(rasterMap4[cells]  , na.rm=T)
+  #resultBinDiversity[resultBinDiversity$bins == bin,6] <- mean(rasterMap5[cells]  , na.rm=T)
   
   r1 <- rasterMap1[cells]; r1[!is.na(r1)] <- 1
   r2 <- rasterMap2[cells]; r2[!is.na(r2)] <- 1
   r3 <- rasterMap3[cells]; r3[!is.na(r3)] <- 1
-  r4 <- rasterMap4[cells]; r4[!is.na(r4)] <- 1
-  r5 <- rasterMap5[cells]; r5[!is.na(r5)] <- 1
+  #r4 <- rasterMap4[cells]; r4[!is.na(r4)] <- 1
+  #r5 <- rasterMap5[cells]; r5[!is.na(r5)] <- 1
   
   resultBinArea[resultBinArea$bins == bin,2] <- sum(r1 * area[cells] , na.rm=T)
   resultBinArea[resultBinArea$bins == bin,3] <- sum(r2 * area[cells] , na.rm=T)
   resultBinArea[resultBinArea$bins == bin,4] <- sum(r3 * area[cells] , na.rm=T)
-  resultBinArea[resultBinArea$bins == bin,5] <- sum(r4 * area[cells] , na.rm=T)
-  resultBinArea[resultBinArea$bins == bin,6] <- sum(r5 * area[cells] , na.rm=T)
+  #resultBinArea[resultBinArea$bins == bin,5] <- sum(r4 * area[cells] , na.rm=T)
+  #resultBinArea[resultBinArea$bins == bin,6] <- sum(r5 * area[cells] , na.rm=T)
   
 }
+
+# Arctic 
 
 resultBinArea[which(resultBinArea$RCP26 > 11413),3] <- 9785.5089
 resultBinArea[,-1] <- resultBinArea[,-1] / 1000
@@ -124,10 +123,94 @@ plot2 <- ggplot() +
         ylab("Average number of species with suitable habitats") + xlab("Latitude") +
         scale_fill_identity(name = '', guide = guide_legend(),labels = c('RCP60','RCP26','Present'))
 
+
+# Global 
+# dfc5ab acd6c9 cabedb
+
+resultBinArea[,-1] <- resultBinArea[,-1] / 1000
+
+plot1 <- ggplot() +
+  geom_bar( data=resultBinArea, aes(x=bins, y=Fucoid, fill="#cabedb"), stat="identity",color="black", alpha=1,size=0.1) +
+  ggtitle("Habitat suitability of marine forests") + 
+  theme_map +
+  ylab("Total habitat area (x1000 km2)") + xlab("Latitude") + 
+  scale_fill_identity(name = '', guide = guide_legend(),labels = c('')) + theme(legend.position="None")
+
+plot2 <- ggplot() +
+  geom_bar( data=resultBinDiversity, aes(x=bins, y=Fucoid, fill="#cabedb"), stat="identity",color="black", alpha=1,size=0.1) +
+  ggtitle("Diversity of marine forests") + 
+  theme_map +
+  ylab("Average number of species with suitable habitats") + xlab("Latitude") +
+  scale_fill_identity(name = '', guide = guide_legend(),labels = c('')) + theme(legend.position="None")
+
 plotCombined <- grid.arrange(plot1, plot2, nrow = 1)
 plotCombined <- cowplot::ggdraw(plotCombined)
 plotCombined
 
-pdf(file=paste0("../../Estimating future distributional shifts of Arctic marine macroalgae/Figures/KelpsFig2.pdf"),width=20,height=8,useDingbats=FALSE)
+pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/FucoidFig2.pdf"),width=20,height=8,useDingbats=FALSE)
 plotCombined
 dev.off()
+
+write.csv(resultBinArea,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultBinArea.csv"))
+write.csv(resultBinDiversity,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultBinDiversity.csv"))
+
+# ---------------
+
+resultDepthArea <- data.frame(depth=0:30,Kelp=NA,Seagrass=NA,Fucoid=NA,FucoidIntertidal=NA,FucoidSubtidal=NA)
+resultDepthBiodiv <- data.frame(depth=0:30,Kelp=NA,Seagrass=NA,Fucoid=NA,FucoidIntertidal=NA,FucoidSubtidal=NA)
+bathymetry <- raster("/Volumes/Jellyfish/GDrive/Manuscripts/Bio-ORACLE Across Climate Changes/Bioclimatic Layers BO3.0/Spatial Data/Rasters/BathymetryDepthMin.tif")
+bathymetry <- bathymetry * (-1)
+
+for(depth in 0:29) {
+  
+  d.range <- c(depth-1,depth)
+  
+  cells = Which(bathymetry > d.range[1] & bathymetry <= d.range[2] ,cells=TRUE)
+
+  resultDepthBiodiv[resultDepthBiodiv$depth == d.range[2],2] <- mean(rasterMap1[cells]  , na.rm=T)
+  resultDepthBiodiv[resultDepthBiodiv$depth == d.range[2],3] <- mean(rasterMap2[cells]  , na.rm=T)
+  resultDepthBiodiv[resultDepthBiodiv$depth == d.range[2],4] <- mean(rasterMap3[cells]  , na.rm=T)
+  #resultDepth[resultDepth$bins == bin,5] <- mean(rasterMap4[cells]  , na.rm=T)
+  #resultDepth[resultDepth$bins == bin,6] <- mean(rasterMap5[cells]  , na.rm=T)
+  
+  r1 <- rasterMap1[cells]; r1[!is.na(r1)] <- 1
+  r2 <- rasterMap2[cells]; r2[!is.na(r2)] <- 1
+  r3 <- rasterMap3[cells]; r3[!is.na(r3)] <- 1
+  #r4 <- rasterMap4[cells]; r4[!is.na(r4)] <- 1
+  #r5 <- rasterMap5[cells]; r5[!is.na(r5)] <- 1
+  
+  resultDepthArea[resultDepthArea$depth == d.range[2],2] <- sum(r1 * area[cells] , na.rm=T)
+  resultDepthArea[resultDepthArea$depth == d.range[2],3] <- sum(r2 * area[cells] , na.rm=T)
+  resultDepthArea[resultDepthArea$depth == d.range[2],4] <- sum(r3 * area[cells] , na.rm=T)
+  #resultDepth[resultDepth$bins == bin,5] <- sum(r4 * area[cells] , na.rm=T)
+  #resultDepth[resultDepth$bins == bin,6] <- sum(r5 * area[cells] , na.rm=T)
+  
+}
+
+write.csv(resultDepthBiodiv,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultDepthBiodiv.csv"))
+write.csv(resultDepthArea,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultDepthArea.csv"))
+
+# dfc5ab acd6c9 cabedb
+
+plot1 <- ggplot() +
+  geom_bar( data=resultDepthArea, aes(x=depth, y=Kelp, fill="#dfc5ab"), stat="identity",color="black", alpha=1,size=0.1) +
+  ggtitle("Habitat suitability of marine forests") + 
+  theme_map +
+  ylab("Total habitat area (x1000 km2)") + xlab("Latitude") + 
+  scale_fill_identity(name = '', guide = guide_legend(),labels = c('')) + theme(legend.position="None")
+
+plot2 <- ggplot() +
+  geom_bar( data=resultDepthBiodiv, aes(x=depth, y=Kelp, fill="#dfc5ab"), stat="identity",color="black", alpha=1,size=0.1) +
+  ggtitle("Diversity of marine forests") + 
+  theme_map +
+  ylab("Average number of species with suitable habitats") + xlab("Latitude") +
+  scale_fill_identity(name = '', guide = guide_legend(),labels = c('')) + theme(legend.position="None")
+
+plotCombined <- grid.arrange(plot1, plot2, nrow = 1)
+plotCombined <- cowplot::ggdraw(plotCombined)
+plotCombined
+
+pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/FucoidFig2.pdf"),width=20,height=8,useDingbats=FALSE)
+plotCombined
+dev.off()
+

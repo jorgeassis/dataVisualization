@@ -101,7 +101,7 @@ mainGlobalMap
 
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
-file <- 113 # Present 95 113
+file <- 92 # Present 91 92 93 98 116
 rasterMap <- raster(rasters[file])
 names(rasterMap)
 
@@ -160,10 +160,10 @@ plotLegend <- plot1
 plot3 <- plot3 + theme(legend.position = "none")
 plot3
 
-pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/SeagrassGlobalFig1.pdf"),width=12,useDingbats=FALSE)
+pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/FucoidSubtidalGlobalFig1.pdf"),width=12,useDingbats=FALSE)
 plot1
 dev.off()
-write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/SeagrassGlobalFig1.csv"))
+write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/FucoidSubtidalGlobalFig1.csv"))
 
 ## --------------------------------------------
 ## --------------------------------------------
