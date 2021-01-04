@@ -116,7 +116,7 @@ rasterMap <- crop(rasterMap,extent(c(-177,177,-90,90)))
 
 rasterMapDF <- data.frame(xyFromCell(rasterMap, Which( !is.na(rasterMap) , cells=T)),val=rasterMap[Which( !is.na(rasterMap) , cells=T)])
 rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { getIndexFromCoords(x[[2]], x[[1]], resolution = resolutionH3) } ))
-rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { mean(rasterMapDF[rasterMapDF$hex == x , "val"]) } ))
+rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { max(rasterMapDF[rasterMapDF$hex == x , "val"]) } ))
 rasterMapDF.polygons <- h3_to_geo_boundary_sf(rasterMapDF$hex)
 rasterMapDF.polygons$hex <- rasterMapDF$hex
 rasterMapDF.polygons$value <- rasterMapDF$val
@@ -160,10 +160,10 @@ plotLegend <- plot1
 plot3 <- plot3 + theme(legend.position = "none")
 plot3
 
-pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/FucoidSubtidalGlobalFig1.pdf"),width=12,useDingbats=FALSE)
+pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Paper/Figures/","/Fig S1 Fucoid Subtidal.pdf"),width=12,useDingbats=FALSE)
 plot1
 dev.off()
-write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/FucoidSubtidalGlobalFig1.csv"))
+write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/","/Fig S1 Subtidal.csv"))
 
 ## --------------------------------------------
 ## --------------------------------------------

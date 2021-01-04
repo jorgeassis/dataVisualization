@@ -115,6 +115,39 @@ unique(dataset$genus)
 
 regions <- shapefile("../Data/marine_ecoregions.shp")
 regionsID <- unique(regions$REALM)
+
+# Based on family
+
+resultsRegionFamily <- data.frame(matrix(0,ncol=length(regionsID),nrow =length(unique(dataset$family)) ))
+
+colnames(resultsRegionFamily) <- regionsID
+rownames(resultsRegionFamily) <- unique(dataset$family)
+
+datasetPts <- dataset
+coordinates(datasetPts) <- ~decimalLongitude+decimalLatitude
+crs(datasetPts) <- crs(regions)
+
+for( i in 1:length(regionsID)) {
+  
+  region.i <- regions[regions$REALM == regionsID[i],]
+  recordsOver <- over(datasetPts,region.i)
+  recordsOver <- dataset[which(!is.na(recordsOver[,1])),]
+  
+  recordsOver <- aggregate(recordsOver, list(recordsOver$family,recordsOver$acceptedName), length)
+  
+  for(g in 1:length(unique(recordsOver$Group.1))) {
+    
+    family <- unique(recordsOver$Group.1)[g]
+    resultsRegionFamily[ which(rownames(resultsRegionFamily) == family) , i] <- sum(recordsOver$Group.1 == family)
+    
+  }
+}
+
+resultsRegionFamily
+write.csv(resultsRegionFamily,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultEcoregionsFamily.csv"))
+
+# Based on Genus
+
 resultsRegionGenus <- data.frame(matrix(0,ncol=length(regionsID),nrow =length(unique(dataset$genus)) ))
 
 colnames(resultsRegionGenus) <- regionsID
@@ -142,9 +175,46 @@ for( i in 1:length(regionsID)) {
 
 write.csv(resultsRegionGenus,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultEcoregionsGenus.csv"))
 
+# Based on species
+
+resultsRegionSpecies <- data.frame(matrix(0,ncol=length(regionsID),nrow =length(unique(dataset$acceptedName)) ))
+
+colnames(resultsRegionSpecies) <- regionsID
+rownames(resultsRegionSpecies) <- unique(dataset$acceptedName)
+
+datasetPts <- dataset
+coordinates(datasetPts) <- ~decimalLongitude+decimalLatitude
+crs(datasetPts) <- crs(regions)
+
+for( i in 1:length(regionsID)) {
+  
+  region.i <- regions[regions$REALM == regionsID[i],]
+  recordsOver <- over(datasetPts,region.i)
+  recordsOver <- dataset[which(!is.na(recordsOver[,1])),]
+  resultsRegionSpecies[ which(rownames(resultsRegionSpecies) %in% as.character(unique(recordsOver$acceptedName))) , i] <- 1
+  
+}
+
+write.csv(resultsRegionSpecies,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultEcoregionsSpecies.csv"))
+
+# -------
+
+resultsRegionGenus
+resultsRegionSpecies
+
+# resultsRegionGenus <- read.csv(paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultEcoregionsGenus.csv"),row.names=1)
+# resultsRegionSpecies <- read.csv(paste0("../../Global biodiversity patterns of Marine Forest Species/Results/resultEcoregionsSpecies.csv"),row.names=1)
+
+distanceMatrix <- resultsRegionSpecies # resultsRegionSpecies resultsRegionGenus
+
+distanceMatrix <- distanceMatrix[rownames(distanceMatrix) %in% as.character(unique(taxonRealm[taxonRealm$phylum != "Ochrophyta","acceptedName"])) ,]
+distanceMatrix <- distanceMatrix[rownames(distanceMatrix) %in% as.character(unique(taxonRealm[taxonRealm$phylum != "Ochrophyta","genus"])) ,]
+
+distanceMatrix <- distanceMatrix[,which(apply(distanceMatrix,2,sum) > 0)]
+
 library(vegan)
 
-distanceRegions <- vegdist(t(sqrt(resultsRegionGenus)), method="bray", binary=FALSE, diag=FALSE, upper=FALSE, na.rm = FALSE)
+distanceRegions <- vegdist(t(sqrt(distanceMatrix)), method="bray", binary=FALSE, diag=FALSE, upper=FALSE, na.rm = TRUE)
 #distanceRegions <- dist(t(resultsRegionGenus), diag=FALSE, upper=FALSE)
 
 plot(hclust(distanceRegions))
@@ -160,9 +230,8 @@ mainTheme <- theme(panel.grid.major = element_blank() ,
 
 f1 <- ggdendrogram(hclust(distanceRegions), rotate = TRUE, theme_dendro = FALSE) + mainTheme +
   xlab("Marine realms") + ylab("Relative distance")
-  
 f1
 
-pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Figures/","/DendogramGlobalFig1.pdf"),width=10,useDingbats=FALSE)
+pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Paper/Figures/","/Fig 5 Species Seagrass.pdf"),width=10,useDingbats=FALSE)
 f1
 dev.off()
