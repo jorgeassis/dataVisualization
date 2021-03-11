@@ -10,7 +10,7 @@
 
 rm(list=(ls()[ls()!="v"]))
 gc(reset=TRUE)
-source("Dependencies/mainFunctions.R")
+source("../GitGIS/Dependencies/mainFunctions.R")
 library(ggnewscale)
 library(h3r)
 library(h3)
@@ -40,7 +40,7 @@ theme_map <-
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-mainDirectory <- "../Results/_ Ensembles/"
+mainDirectory <- "../Results/"
 
 ## ------------------------
 # Global projection
@@ -51,7 +51,7 @@ worldMap <- ne_countries(scale = 10, returnclass = "sf")
 worldMapCoordRef <- crs(worldMap)
 
 mainGlobalMap <- ggplot() + 
-  geom_sf(data = worldMap,fill="#ABABAB", colour = "#9B9B9B" , size=0.1 ) +
+  geom_sf(data = worldMap,fill="#C9C9C9", colour = "#A6A6A6" , size=0.1 ) +
   theme(axis.ticks=element_blank()) + ylab("") + xlab("") +
   theme_map + coord_sf(crs = worldMapCoordRef)
 mainGlobalMap
@@ -101,12 +101,47 @@ mainGlobalMap
 
 rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
 rasters
-file <- 92 # Present 91 92 93 98 116
+
+resultsDirectory <- "../Results/"
+mapName <- "Present"
+file <- 8
 rasterMap <- raster(rasters[file])
 names(rasterMap)
+rasterMap[rasterMap==0] <- NA
 
-# rasterMap[rasterMap == 0.2] <- NA
-# rasterMap[rasterMap == 0] <- NA
+## --------------
+
+rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
+rasters
+
+resultsDirectory <- "../Results/"
+mapName <- "DiffRCP85"
+
+file <- 1 
+rasterMapP <- raster(rasters[file]); names(rasterMapP)
+
+file <- 5 # 3 5
+rasterMapF <- raster(rasters[file]); names(rasterMapF)
+
+rasterMap <- rasterMapF - rasterMapP
+rasterMap
+
+## --------------
+
+rasters <- list.files(mainDirectory,full.names = TRUE,pattern="tif")
+rasters
+
+resultsDirectory <- "../Results/"
+mapName <- "LG.RCP26"
+
+file <- 17
+rasterMapP <- raster(rasters[file]); names(rasterMapP)
+
+file <- 23 # 20 23
+rasterMapF <- raster(rasters[file]); names(rasterMapF)
+
+f1 <- function(x) { ifelse( x[[1]] == 0 & x[[2]] == 1 , 1 , ifelse(  x[[1]] == 1 & x[[2]] == 1 , 0 , ifelse(  x[[1]] == 1 & x[[2]] == 0 , -1 , NA ) ))  }
+rasterMap <- calc(stack(rasterMapP,rasterMapF), fun=f1)
 
 ## --------------
 
@@ -116,7 +151,7 @@ rasterMap <- crop(rasterMap,extent(c(-177,177,-90,90)))
 
 rasterMapDF <- data.frame(xyFromCell(rasterMap, Which( !is.na(rasterMap) , cells=T)),val=rasterMap[Which( !is.na(rasterMap) , cells=T)])
 rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { getIndexFromCoords(x[[2]], x[[1]], resolution = resolutionH3) } ))
-rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { max(rasterMapDF[rasterMapDF$hex == x , "val"]) } ))
+rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { min(rasterMapDF[rasterMapDF$hex == x , "val"],na.rm=T) } ))
 rasterMapDF.polygons <- h3_to_geo_boundary_sf(rasterMapDF$hex)
 rasterMapDF.polygons$hex <- rasterMapDF$hex
 rasterMapDF.polygons$value <- rasterMapDF$val
@@ -135,35 +170,63 @@ rasterMapDF.polygons <- fortify(rasterMapDF.polygons)
 rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$lat >= extent(worldMap)[3],]
 rasterMapDF.polygons$value <- sapply(as.numeric(rasterMapDF.polygons$id), function(x) { rasterMapDF[x,"val"] })
 
+minLegend <- round(min(rasterMapDF.polygons$value)); minLegend
+maxLegend <- round(max(rasterMapDF.polygons$value)); maxLegend
+
+## -----------------
+
+# rasterMapDF.polygons[rasterMapDF.polygons$value < -20,"value"] <- -20
 # rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$value >= 2,]
 
-minLegend <- round(min(rasterMapDF.polygons$value))
-maxLegend <- round(max(rasterMapDF.polygons$value))
+minLegend <- -30
+maxLegend <- 530
 
-minLegend
-maxLegend
-# maxLegend <- # Kelp Regular maps 56
+#----------------------
+# Classes Map 
+# Light green 82DC9D; Light orange F58B12; Light Blue 11BEE9; Light purple D444C1
 
 fieldLabel <- "Species richness\n[number]"
+rasterMapDF.polygons$value <- as.factor(rasterMapDF.polygons$value)
+myColors <- c("#82DC9D") 
+myColors <- c("#82DC9D","#F58B12") 
+myColors <- c("#D444C1","#82DC9D","#F58B12")
+
+#----------------------
+# Continuous Map 
+# Light green 82DC9D; Light orange F58B12; Light Blue 11BEE9; Light purple D444C1; Dark purple 8D007A
+
+myColors <- c("#8D007A","#FFFFFF","#F58B12") 
+
+#----------------------
 
 plot1 <- mainGlobalMap +
-  geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour = NA, size = 0.1) +
-  scale_fill_viridis_c(name= fieldLabel, option = 'magma', direction = -1, begin = 0, end = 1, limits=c(minLegend,maxLegend)) +
-  theme(legend.position=c(.99, .99),
+  
+  # Classes
+  geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour ="black", fill= myColors[rasterMapDF.polygons$value], size = 0.1) +
+  
+  # Continuous
+  #geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour ="black", size = 0.1) +
+  #scale_colour_gradient2(low = myColors[1], mid = myColors[2], high = myColors[3], guide = "colourbar", aesthetics = "fill", limits=c(minLegend,maxLegend)) +
+
+  
+  # Continuous (Negative / Positive)
+  # geom_polygon(data = rasterMapDF.polygons[rasterMapDF.polygons$value >= 0,], aes(x = long, y = lat,group=id, fill=value), colour ="black", size = 0.1) +
+  # scale_colour_gradient2(low = myColors[2], high = myColors[3], guide = "colourbar", aesthetics = "fill", limits=c(0,maxLegend)) +
+  # new_scale("fill") +
+  # geom_polygon(data = rasterMapDF.polygons[rasterMapDF.polygons$value < 0,], aes(x = long, y = lat,group=id, fill=value), colour ="black", size = 0.1) +
+  # scale_colour_gradient2(low = myColors[1], high = myColors[2], guide = "colourbar", aesthetics = "fill", limits=c(minLegend,0)) +
+    
+  theme(legend.position=c(.99, .99), # legend.position=c(.99, .99)
         legend.justification=c("right", "top"),
         legend.margin=margin(0,0,0,0),
         legend.box.margin=margin(0,0,0,-80),legend.title=element_blank(),legend.background = element_rect(fill = "#ffffff", color = NA))
 
 plot1
-plotLegend <- plot1
 
-plot3 <- plot3 + theme(legend.position = "none")
-plot3
-
-pdf(file=paste0("../../Global biodiversity patterns of Marine Forest Species/Paper/Figures/","/Fig S1 Fucoid Subtidal.pdf"),width=12,useDingbats=FALSE)
+pdf(file=paste0(resultsDirectory,mapName,".pdf"),width=12,useDingbats=FALSE)
 plot1
 dev.off()
-write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/","/Fig S1 Subtidal.csv"))
+# write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/","/Fig S1 Seagrass.csv"))
 
 ## --------------------------------------------
 ## --------------------------------------------
