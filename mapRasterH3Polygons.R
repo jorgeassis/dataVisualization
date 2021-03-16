@@ -196,6 +196,7 @@ myColors <- c("#D444C1","#82DC9D","#F58B12")
 # Light green 82DC9D; Light orange F58B12; Light Blue 11BEE9; Light purple D444C1; Dark purple 8D007A
 
 myColors <- c("#8D007A","#FFFFFF","#F58B12") 
+myColors <- c("#6FBBE8","#A1ECD8","#F6F9AB","#FCB46D","#B21414") # FCBA49
 
 #----------------------
 
@@ -207,6 +208,11 @@ plot1 <- mainGlobalMap +
   # Continuous
   #geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour ="black", size = 0.1) +
   #scale_colour_gradient2(low = myColors[1], mid = myColors[2], high = myColors[3], guide = "colourbar", aesthetics = "fill", limits=c(minLegend,maxLegend)) +
+
+  # Continuous
+  #geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour ="black", size = 0.1) +
+  #scale_colour_gradient2(low = myColors[1], mid = myColors[2], high = myColors[3], guide = "colourbar", aesthetics = "fill", limits=c(minLegend,maxLegend)) +
+  #scale_colour_gradientn(colours = myColors, values = c(0,0.2,0.4,0.6,0.8,1), guide = "colourbar", aesthetics = "fill", limits=c(minLegend,maxLegend)) +
 
   
   # Continuous (Negative / Positive)
