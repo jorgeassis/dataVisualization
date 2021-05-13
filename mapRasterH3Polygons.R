@@ -147,20 +147,20 @@ rasterMap <- calc(stack(rasterMapP,rasterMapF), fun=f1)
 
 # https://github.com/uber/h3/blob/master/docs/core-library/restable.md
 resolutionH3 <- 3
-rasterMap <- crop(rasterMap,extent(c(-177,177,-90,90)))
+rasterMap <- crop(rasterMap,extent(c(-175,175,-90,90)))
 
 rasterMapDF <- data.frame(xyFromCell(rasterMap, Which( !is.na(rasterMap) , cells=T)),val=rasterMap[Which( !is.na(rasterMap) , cells=T)])
-rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { getIndexFromCoords(x[[2]], x[[1]], resolution = resolutionH3) } ))
-rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { min(rasterMapDF[rasterMapDF$hex == x , "val"],na.rm=T) } ))
-rasterMapDF.polygons <- h3_to_geo_boundary_sf(rasterMapDF$hex)
-rasterMapDF.polygons$hex <- rasterMapDF$hex
-rasterMapDF.polygons$value <- rasterMapDF$val
+rasterMapDF <- data.frame(rasterMapDF,hex=apply(rasterMapDF[,1:2],1,function(x) { h3js::h3_geo_to_h3(x[[2]], x[[1]], res = resolutionH3) } ))
+rasterMapDF <- data.frame(hex=unique(rasterMapDF$hex),val=sapply(unique(rasterMapDF$hex),function(x) { max(rasterMapDF[rasterMapDF$hex == x , "val"],na.rm=T) } ))
+rasterMapDF.polygons <- h3jsr::h3_to_polygon(rasterMapDF$hex)
+rasterMapDF.polygons <- st_sf(rasterMapDF.polygons)
+
+rasterMapDF$val[rasterMapDF$val > max(modelDataset$resp)] <- max(modelDataset$resp)
+
+rasterMapDF.polygons$hex <- as.character(rasterMapDF$hex)
+rasterMapDF.polygons$value <- as.numeric(as.character(rasterMapDF$val))
 
 ## ----------------------------------------------------------------------------------------------------
-## ----------------------------------------------------------------------------------------------------
-
-## -----------------
-# As Sp 
 
 rasterMapDF.polygons <- sf:::as_Spatial(rasterMapDF.polygons)
 rasterMapDF.polygons$value <- as.numeric(as.character(rasterMapDF.polygons$value))
@@ -170,26 +170,33 @@ rasterMapDF.polygons <- fortify(rasterMapDF.polygons)
 rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$lat >= extent(worldMap)[3],]
 rasterMapDF.polygons$value <- sapply(as.numeric(rasterMapDF.polygons$id), function(x) { rasterMapDF[x,"val"] })
 
-minLegend <- round(min(rasterMapDF.polygons$value)); minLegend
-maxLegend <- round(max(rasterMapDF.polygons$value)); maxLegend
 
-## -----------------
+rasterMapDF.polygons$value[rasterMapDF.polygons$value < 0] <- 0
 
-# rasterMapDF.polygons[rasterMapDF.polygons$value < -20,"value"] <- -20
-# rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$value >= 2,]
 
-minLegend <- -30
-maxLegend <- 530
+minLegend <- min(rasterMapDF.polygons$value); minLegend
+maxLegend <- max(rasterMapDF.polygons$value); maxLegend
 
 #----------------------
-# Classes Map 
-# Light green 82DC9D; Light orange F58B12; Light Blue 11BEE9; Light purple D444C1
+# Continuous Map 
+# Light green 82DC9D; Light orange F58B12; Light Blue 11BEE9; Light purple D444C1; Dark purple 8D007A
 
-fieldLabel <- "Species richness\n[number]"
-rasterMapDF.polygons$value <- as.factor(rasterMapDF.polygons$value)
-myColors <- c("#82DC9D") 
-myColors <- c("#82DC9D","#F58B12") 
-myColors <- c("#D444C1","#82DC9D","#F58B12")
+# "#6FBBE8","#A1ECD8","#F6F9AB","#FCB46D","#B21414" // c(0,0.2,0.4,0.6,0.8,1)
+
+myColors <- c("#6FBBE8","#A1ECD8","#F6F9AB","#FCB46D","#B21414")
+
+#----------------------
+
+plot1 <- mainGlobalMap +
+  scale_colour_gradientn(colours = myColors, values = seq(0,1,length.out=6), n.breaks = 6,labels=round(seq((minLegend),(maxLegend), length.out=6), digits=2), guide = "colourbar", aesthetics = "fill", limits=c(minLegend,maxLegend) ) +
+  geom_polygon(data = rasterMapDF.polygons, aes(x = long, y = lat,group=id, fill=value), colour = NA, size = 0) +
+  theme(legend.position="bottom",
+        legend.margin=margin(0,0,0,0),
+        legend.key.height= unit(0.25, 'cm'),
+        legend.key.width= unit(0.75, 'cm'),
+        legend.background = element_rect(fill = "#F3F3F3", color = NA)) + theme(legend.title=element_blank())
+
+plot1
 
 #----------------------
 # Continuous Map 
@@ -231,27 +238,6 @@ plot1
 
 pdf(file=paste0(resultsDirectory,mapName,".pdf"),width=12,useDingbats=FALSE)
 plot1
-dev.off()
-# write.csv(rasterMapDF.polygons,file=paste0("../../Global biodiversity patterns of Marine Forest Species/Results/","/Fig S1 Seagrass.csv"))
-
-## --------------------------------------------
-## --------------------------------------------
-## As Sf
-
-fieldLabel <- "Species richness\n[number]"
-fieldLabel <- "Species gain\n[number]"
-
-plot2 <- mainGlobalMap +
-  geom_sf(data = rasterMapDF.polygons, aes(fill = value) , size=0.1) +
-  scale_fill_viridis_c(option = 'magma', direction = -1, begin = 0, end = 1) +
-  coord_sf(crs = worldMapCoordRef) + labs(fill = fieldLabel) +
-  theme(legend.position="bottom",
-        legend.justification=c("top"),
-        legend.margin=margin(0,0,0,0),
-        legend.box.margin=margin(0,0,0,-80))
-
-pdf(file=paste0("../Results/_ Figures/","/KelpsGlobalFig2.pdf"),width=12,useDingbats=FALSE)
-plot2
 dev.off()
 
 ## --------------------------------------------
