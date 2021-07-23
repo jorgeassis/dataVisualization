@@ -171,6 +171,9 @@ rasterMapDF.polygons <- rasterMapDF.polygons[rasterMapDF.polygons$lat >= extent(
 rasterMapDF.polygons$value <- sapply(as.numeric(rasterMapDF.polygons$id), function(x) { rasterMapDF[x,"val"] })
 
 
+rasterMapDF.polygons <- st_wrap_dateline(rasterMapDF.polygons, options = "WRAPDATELINE=YES", quiet = TRUE)
+
+
 rasterMapDF.polygons$value[rasterMapDF.polygons$value < 0] <- 0
 
 
