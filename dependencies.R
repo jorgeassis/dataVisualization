@@ -24,7 +24,7 @@ getMapExtent <- function() {
   return( extent(sps) )
   
 }
-
+ 
 gplot_data <- function(x, maxpixels = 50000)  {
   x <- raster::sampleRegular(x, maxpixels, asRaster = TRUE)
   coords <- raster::xyFromCell(x, seq_len(raster::ncell(x)))
