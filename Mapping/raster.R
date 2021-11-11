@@ -11,33 +11,30 @@ rm(list=(ls()[ls()!="v"]))
 gc(reset=TRUE)
 library(raster)
 library(ggnewscale)
+library(rnaturalearth)
+library(ggplot2)
 
 ## --------------------------------------------------
 ## --------------------------------------------------
 ## Custom Files, Extent and Colors
 
-cExtent <- extent(c(10,30,-38,-12))
-
-cColors <- c("#8EB0D6", "#F8F4C1","#E29939","#AA1313")
-cColorsGray <- c("#868686", "#000000")
-panelColor <- "#ffffff"
-oceanColor <- "#ffffff"
+cExtent <- extent(c(-178,-88,5,65))
 
 ## ----------------------------------------------------------------------------------------------------
 ## ----------------------------------------------------------------------------------------------------
 ## Raster map
 
-worldMap <- ne_countries(scale = 10, returnclass = "sp")
-oceanMap <- "Data/GRAY_HR_SR_OB.tif"
-rasterMap <- "Data/KelpDiversity.tif"
-
+rasterMap <- "/Volumes/Jellyfish/Dropbox/Manuscripts/Past distirbutional shifts of Phyllospadix along NE Pacific coastlines/ResultsPscouleri/EnsembleReclass.LGM.Masked.tif"
+worldMap <- shapefile("Data/landmassLGMPolygon2.shp")
 worldMap <- crop( worldMap, cExtent )
 
-oceanMap <- crop( raster(oceanMap), cExtent )
-oceanMap <- as.data.frame(oceanMap,xy=TRUE,na.rm=T)
-colnames(oceanMap) <- c("Lon","Lat","Val")
+rasterMap <- "/Volumes/Jellyfish/Dropbox/Manuscripts/Past distirbutional shifts of Phyllospadix along NE Pacific coastlines/ResultsPscouleri/EnsembleReclass.Present.tif"
+rasterMap <- "/Volumes/Jellyfish/Dropbox/Manuscripts/Past distirbutional shifts of Phyllospadix along NE Pacific coastlines/ResultsPscouleri/EnsembleReclass.RCP85.Masked.tif"
+worldMap <- ne_countries(scale = 10, returnclass = "sp")
+worldMap <- crop( worldMap, cExtent )
 
 rasterMap <- crop( raster(rasterMap), cExtent )
+rasterMap <- aggregate(rasterMap,2,max)
 rasterMap <- as.data.frame(rasterMap,xy=TRUE,na.rm=T)
 colnames(rasterMap) <- c("Lon","Lat","Val")
 
@@ -62,37 +59,55 @@ theme_map <-
 
 ## -----------------
 
-captionMap <- "My caption"
+# worldMapCoordRef <- paste0("+proj=laea +lat_0=",mean(cExtent[4],cExtent[3])," +lon_0=",mean(cExtent[2],cExtent[1])," +x_0=4321000 +y_0=3210000 +ellps=GRS80 +units=m +no_defs")
+# worldMapCoordRef <- crs(worldMap)
+# worldMapCoordRef <- CRS("+proj=robin +lon_0=180 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
+# projectionMap <- coord_sf(crs = worldMapCoordRef) 
+
+# projectionMap <- coord_map("azequalarea") 
+# projectionMap <- coord_map('lambert', lat0=extent(worldMap)[3], lat1=extent(worldMap)[4]) 
+# projectionMap <- coord_equal() 
+# projectionMap <- coord_map("bonne", lat0 = 50) 
+# projectionMap <- coord_map("conic", lat0 = 15) 
+# projectionMap <- coord_map("gilbert")
+
+projectionMap <- coord_map("mollweide")
+
+## -----------------
+
+captionMap <- "Future (2100, RCP85)"
+
+# Continuous
 myColors <- c("#6FBBE8","#A1ECD8","#F6F9AB","#FCB46D","#B21414")
 
-plot1 <- ggplot() +
+# Binomial
+myColors <- c("#A41F1F")
+
+plot3 <- ggplot() +
   
   # geom_tile(data = oceanMap, aes(x=Lon,y=Lat,fill=Val)) +
   # scale_fill_gradientn(colours=cColorsGray, limits=c(69,150)) + # Continuous
-  
-  new_scale("fill") +
+  # new_scale("fill") +
   geom_polygon(data = worldMap, aes(x = long, y = lat, group = group), fill="#D2D2D2", colour = "#D2D2D2" , size=0.25 ) +
-  
   geom_tile(data = rasterMap, aes(x=Lon,y=Lat,fill=Val)) +
-  scale_fill_gradientn(colours=myColors, na.value='transparent') + # ,limits=c(1,1) BINOMIAL
+  scale_fill_gradientn(colours=myColors, na.value='transparent',limits=c(1,1)) + # ,limits=c(1,1) BINOMIAL
 
-  # geom_segment(colour = "Black" , size = 0.15,aes(y = cExtent[3]-1, yend = cExtent[4]+1, x = seq(cExtent[1],cExtent[2], by = 5)[2:4], xend = seq(cExtent[1],cExtent[2], by = 5)[2:4]), linetype = "dashed") +
-  # geom_segment(colour = "Black" , size = 0.15,aes(y = seq(cExtent[3],cExtent[4], by = 5)[2:5], yend =seq(cExtent[3],cExtent[4], by = 5)[2:5], x = cExtent[1]-1, xend = cExtent[2]+1), linetype = "dashed") +
+  projectionMap +
   
-  coord_equal() + # coord_map('lambert', lat0=extent(worldMap)[4], lat1=extent(worldMap)[3]) + 
   theme_map + 
-  theme(legend.position="bottom",
+  theme(legend.position="None", # "bottom
         legend.margin=margin(0,0,0,0),
         legend.key.height= unit(0.25, 'cm'),
         legend.key.width= unit(0.75, 'cm'),
         legend.background = element_rect(fill = "#F3F3F3", color = NA)) + theme(legend.title=element_blank()) +
-  annotate(geom="text", x=cExtent[2]-cExtent[1], y=cExtent[3]-2, label=captionMap,size=6,family="Helvetica", color = "#7F7F7F",hjust = 0.5)
+  annotate(geom="text", x=cExtent[1]+2, y=cExtent[3]+8, label=captionMap,size=4.25,family="Helvetica", color = "#444444",hjust = 0)
 
-plot1
+plot3
 
 # --------------------
 # Multiple Plot
 
+library(gridExtra)
 pdf(file="Plot.pdf",width=15,useDingbats=FALSE)
 grid.arrange(plot1,plot2,plot3, ncol = 3)
 dev.off()
