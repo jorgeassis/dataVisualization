@@ -13,6 +13,8 @@ library(ggplot2)
 library(rnaturalearth)
 library(sf)
 library(rgdal)
+library(raster)
+library(geosphere)
 
 ## --------------------------------------------------
 
@@ -107,8 +109,8 @@ mainGlobalMap
 
 ## ------------------------
 # Robinson equal area projection
+# https://bluegreenlabs.org/post/map-building-3/
 
-worldMap <- ne_countries(scale = 10, returnclass = "sf")
 projection <- CRS("+proj=robin +over")
 
 bb <- sf::st_union(sf::st_make_grid(
@@ -116,12 +118,28 @@ bb <- sf::st_union(sf::st_make_grid(
             xmax = 180,
             ymax = 90,
             ymin = -90), crs = st_crs(4326)), n = 100))
-bb <- st_transform(bb, as.character(projection))
+bb <- st_transform(bb, "+proj=robin +over")
 
-# transform the coastline to robinson
+worldMap <- ne_countries(scale = 10, returnclass = "sf")
 worldMap <- st_transform(worldMap, projection)
 
+rasterMap <- raster("Data/KelpDiversity.tif")
+e <- as(extent(rasterMap), "SpatialPolygons")
+crs(e) <- crs(rasterMap)
+e <- makePoly(e)  # add additional vertices
+re <- spTransform(e, "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m")
+rasterMap <- projectRaster(rasterMap, crs = "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m")
+rasterMap <- mask(rasterMap, re)
+rasterMap <- as.data.frame(rasterMap,xy=TRUE,na.rm=T)
+colnames(rasterMap) <- c("Lon","Lat","Val")
+
+myColors <- c("#6FBBE8","#A1ECD8","#F6F9AB","#FCB46D","#B21414")
+
 mainGlobalMap <- ggplot() + 
+ 
+  geom_raster(data = rasterMap, aes(x=Lon,y=Lat,fill=Val), interpolate = FALSE) + 
+  scale_fill_gradientn(name= "AE", colours=myColors, na.value='transparent') + # ,limits=c(
+  
   geom_sf(data = worldMap,fill="#c4c4c4", colour = "#B6B6B6" , size=0.1 ) +
   geom_sf(data = bb,fill=NA, colour = "grey25" , linetype='solid', size=0.2 ) +
   theme(axis.ticks=element_blank()) + ylab("") + xlab("") +
@@ -133,4 +151,3 @@ mainGlobalMap <- ggplot() +
         legend.background = element_rect(fill = "#FFFFFF", color = NA)) + theme(legend.title=element_blank())
 
 mainGlobalMap
-
