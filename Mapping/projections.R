@@ -9,6 +9,9 @@
 
 # Projections and mapped projections
 
+## library(credentials)
+## set_github_pat()
+
 library(ggplot2)
 library(rnaturalearth)
 library(sf)
