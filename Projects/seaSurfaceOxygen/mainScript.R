@@ -66,7 +66,7 @@ myColors <- c("#6FBBE8","#A1ECD8","#F6F9AB","#FCB46D","#B21414","#D278E4","#9914
 plot <- ggplot() +
   geom_tile(data = oxygenLayer, aes(x=Lon,y=Lat,fill=Val)) +
   scale_fill_gradientn(guide = guide_legend(title="Sea surface dissolved oxygen [mmol.m3]", direction = "horizontal", title.position = "top", title.hjust = 0.5), colours=myColors, na.value='transparent') +
-  geom_polygon(data = worldMap, aes(x = long, y = lat, group = group), fill="#A1A1A1", colour = "#A1A1A1" , size=0.25 ) +
+  geom_polygon(data = worldMap, aes(x = long, y = lat, group = group), fill="#CACACA", colour = "#CACACA" , size=0.25 ) +
   geom_sf(data = bb,fill=NA, colour = "white" , linetype='solid', size=2 ) +
   theme_map
 plot
